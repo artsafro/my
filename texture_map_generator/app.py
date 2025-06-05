@@ -19,7 +19,6 @@ from .processing import generate_map, rgb_to_hex
 PAD_X = 5
 PAD_Y = 5
 
-
 class TextureMapApp:
     """GUI application for generating various texture maps."""
 
@@ -82,6 +81,7 @@ class TextureMapApp:
         self.v_scrollbar.grid(row=1, column=1, sticky="ns")
 
         self.preview_frame = ttk.Frame(self.canvas)
+        
         self.canvas.create_window((0, 0), window=self.preview_frame, anchor="nw")
         self.preview_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
 
