@@ -21,6 +21,7 @@
         <div class="map">
           <p>{{ m }}</p>
           <img src="data:image/png;base64,{{ data }}" alt="{{ m }}">
+          <a download="{{ item.name }}_{{ m }}.png" href="data:image/png;base64,{{ data }}">Download</a>
         </div>
         {% endfor %}
       </div>

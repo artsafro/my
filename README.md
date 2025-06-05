@@ -20,4 +20,6 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Open `http://localhost:5000` in your browser, upload images and the generated maps will be displayed.
+Open `http://localhost:5000` in your browser. Upload images, adjust map strengths
+and diffuse parameters, then generate maps. Results can be downloaded directly
+from the browser.

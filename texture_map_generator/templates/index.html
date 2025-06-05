@@ -16,6 +16,29 @@
       <h1>Texture Map Generator</h1>
       <form action="/" method="post" enctype="multipart/form-data">
         <input type="file" name="images" multiple accept="image/*"><br>
+        <h3>Diffuse Settings</h3>
+        <label>Brightness <input type="range" name="brightness" min="0" max="200" value="100"></label>
+        <label><input type="checkbox" name="brightness_enabled" checked> enable</label><br>
+        <label>Contrast <input type="range" name="contrast" min="0" max="200" value="100"></label>
+        <label><input type="checkbox" name="contrast_enabled" checked> enable</label><br>
+        <label>Tint Strength <input type="range" name="tint_strength" min="0" max="100" value="50"></label>
+        <label><input type="checkbox" name="tint_enabled" checked> enable</label>
+        <input type="color" name="tint_color" value="#ffffff"><br>
+
+        <h3>Map Strengths</h3>
+        <label>Opacity <input type="range" name="strength_Opacity" min="0" max="100" value="50"></label><br>
+        <label>AO <input type="range" name="strength_AO" min="0" max="100" value="50"></label><br>
+        <label>Roughness <input type="range" name="strength_Roughness" min="0" max="100" value="50"></label><br>
+        <label>Normal <input type="range" name="strength_Normal" min="0" max="100" value="50"></label><br>
+        <label>Displacement <input type="range" name="strength_Displacement" min="0" max="100" value="50"></label><br>
+        <label>Metallic <input type="range" name="strength_Metallic" min="0" max="100" value="50"></label><br>
+        <label>Emissive <input type="range" name="strength_Emissive" min="0" max="100" value="50"></label><br>
+
+        <h3>Options</h3>
+        <label><input type="checkbox" name="invert_green"> Invert Green Channel</label><br>
+        <label><input type="checkbox" name="metallic_enabled" checked> Metallic Enabled</label><br>
+        <label><input type="checkbox" name="emissive_enabled"> Emissive Enabled</label>
+        <input type="color" name="emissive_color" value="#f7f731"><br><br>
         <button type="submit">Generate Maps</button>
       </form>
     </div>
