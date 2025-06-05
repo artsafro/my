@@ -1,11 +1,9 @@
-from texture_map_generator.app import TextureMapApp
-import tkinterdnd2 as tkdnd
+from texture_map_generator.web_app import create_app
 
 
 def main() -> None:
-    root = tkdnd.TkinterDnD.Tk()
-    app = TextureMapApp(root)
-    root.mainloop()
+    app = create_app()
+    app.run(debug=True)
 
 
 if __name__ == "__main__":
