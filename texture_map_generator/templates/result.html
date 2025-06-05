@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Texture Map Generator - Results</title>
+    <style>
+      body { background: #2d2d2d; color: #fff; font-family: sans-serif; }
+      .container { width: 90%%; margin: auto; }
+      .image-block { margin-bottom: 40px; }
+      .map { display: inline-block; margin: 10px; text-align: center; }
+      img { width: 256px; height: 256px; display: block; border: 1px solid #555; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Generated Maps</h1>
+      {% for item in results %}
+      <div class="image-block">
+        <h2>{{ item.name }}</h2>
+        {% for m, data in item.maps.items() %}
+        <div class="map">
+          <p>{{ m }}</p>
+          <img src="data:image/png;base64,{{ data }}" alt="{{ m }}">
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+      <p><a href="/">Back</a></p>
+    </div>
+  </body>
+</html>

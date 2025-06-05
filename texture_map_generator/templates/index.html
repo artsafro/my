@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Texture Map Generator</title>
+    <style>
+      body { background: #2d2d2d; color: #fff; font-family: sans-serif; }
+      .container { width: 80%%; margin: auto; text-align: center; padding-top: 50px; }
+      input[type=file] { margin: 20px 0; }
+      button { padding: 10px 20px; background: #444; color: #fff; border: none; }
+      button:hover { background: #666; }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Texture Map Generator</h1>
+      <form action="/" method="post" enctype="multipart/form-data">
+        <input type="file" name="images" multiple accept="image/*"><br>
+        <button type="submit">Generate Maps</button>
+      </form>
+    </div>
+  </body>
+</html>
