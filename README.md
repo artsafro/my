@@ -1,6 +1,6 @@
 # Texture Map Generator
 
-This repository contains a Tkinter-based GUI application for generating common texture maps (AO, Roughness, Normal, etc.) from source images.
+This repository contains a Tkinter-based GUI application for generating common texture maps (AO, Roughness, Normal, etc.) from source images. The interface uses themed widgets for a more modern look.
 
 ## Structure
 
@@ -18,4 +18,4 @@ Run the application with:
 python main.py
 ```
 
-Drag-and-drop images onto the window or use the "Выбрать изображение(я)" button. Adjust parameters and save the generated maps.
+Drag-and-drop images onto the window or use the "Выбрать изображение(я)" button. `ttk` styling provides a polished experience. Adjust parameters and save the generated maps.

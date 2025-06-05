@@ -6,13 +6,18 @@ from typing import List
 import cv2
 import numpy as np
 import tkinter as tk
-from tkinter import filedialog, messagebox, Scrollbar, Canvas, colorchooser, ttk
+from tkinter import filedialog, messagebox, colorchooser
+from tkinter import ttk
+from tkinter.ttk import Scrollbar
+from tkinter import Canvas
 import tkinterdnd2 as tkdnd
 from PIL import Image, ImageTk
 from PIL.Image import Resampling
 
 from .processing import generate_map, rgb_to_hex
 
+PAD_X = 5
+PAD_Y = 5
 
 class TextureMapApp:
     """GUI application for generating various texture maps."""
@@ -37,34 +42,46 @@ class TextureMapApp:
 
     # ------------------------------------------------------------------ UI setup
     def setup_ui(self) -> None:
-        btn_frame = tk.Frame(self.root)
-        btn_frame.pack(pady=10)
-        tk.Button(btn_frame, text="Выбрать изображение(я)", command=self.select_images).pack(side="left", padx=5)
-        tk.Button(btn_frame, text="Выбрать папку сохранения", command=self.select_save_path).pack(side="left", padx=5)
-        tk.Button(btn_frame, text="Сохранить все карты", command=self.save_all_maps).pack(side="left", padx=5)
+        style = ttk.Style(self.root)
+        try:
+            style.theme_use("clam")
+        except tk.TclError:
+            pass
+        style.configure("TButton", padding=(PAD_X, PAD_Y))
+        style.configure("TCheckbutton", padding=(PAD_X, PAD_Y))
 
-        tk.Label(btn_frame, text="Сохр. размер:").pack(side="left")
-        ttk.Combobox(btn_frame, textvariable=self.save_res, values=["original", "2048", "4096"], width=7).pack(side="left", padx=5)
-        tk.Checkbutton(btn_frame, text="Инвертировать зелёный канал Normal", variable=self.invert_green).pack(side="left", padx=10)
-        tk.Checkbutton(btn_frame, text="Metallic материал", variable=self.metallic_enabled).pack(side="left", padx=10)
+        btn_frame = ttk.Frame(self.root)
+        btn_frame.grid(row=0, column=0, sticky="w", padx=PAD_X, pady=PAD_Y)
+        self.root.columnconfigure(0, weight=1)
+        self.root.rowconfigure(1, weight=1)
 
-        emissive_frame = tk.Frame(btn_frame)
-        emissive_frame.pack(side="left", padx=10)
-        tk.Checkbutton(emissive_frame, text="Emissive", variable=self.emissive_enabled, command=self.update_all_emissives).pack(side="left")
-        tk.Button(emissive_frame, text="Цвет Emissive", command=self.select_emissive_color).pack(side="left")
-        self.emissive_preview = tk.Label(emissive_frame, width=3, height=1, bg=rgb_to_hex(self.emissive_color), relief="ridge")
-        self.emissive_preview.pack(side="left", padx=5)
+        ttk.Button(btn_frame, text="Выбрать изображение(я)", command=self.select_images).pack(side="left", padx=PAD_X)
+        ttk.Button(btn_frame, text="Выбрать папку сохранения", command=self.select_save_path).pack(side="left", padx=PAD_X)
+        ttk.Button(btn_frame, text="Сохранить все карты", command=self.save_all_maps).pack(side="left", padx=PAD_X)
+
+        ttk.Label(btn_frame, text="Сохр. размер:").pack(side="left")
+        ttk.Combobox(btn_frame, textvariable=self.save_res, values=["original", "2048", "4096"], width=7).pack(side="left", padx=PAD_X)
+        ttk.Checkbutton(btn_frame, text="Инвертировать зелёный канал Normal", variable=self.invert_green).pack(side="left", padx=PAD_X*2)
+        ttk.Checkbutton(btn_frame, text="Metallic материал", variable=self.metallic_enabled).pack(side="left", padx=PAD_X*2)
+
+        emissive_frame = ttk.Frame(btn_frame)
+        emissive_frame.pack(side="left", padx=PAD_X*2)
+        ttk.Checkbutton(emissive_frame, text="Emissive", variable=self.emissive_enabled, command=self.update_all_emissives).pack(side="left")
+        ttk.Button(emissive_frame, text="Цвет Emissive", command=self.select_emissive_color).pack(side="left")
+        self.emissive_preview = ttk.Label(emissive_frame, width=3, background=rgb_to_hex(self.emissive_color), relief="ridge")
+        self.emissive_preview.pack(side="left", padx=PAD_X)
 
         self.canvas = Canvas(self.root, scrollregion=(0, 0, 5000, 5000))
         self.h_scrollbar = Scrollbar(self.root, orient="horizontal", command=self.canvas.xview)
         self.v_scrollbar = Scrollbar(self.root, orient="vertical", command=self.canvas.yview)
         self.canvas.configure(xscrollcommand=self.h_scrollbar.set, yscrollcommand=self.v_scrollbar.set)
 
-        self.h_scrollbar.pack(side="bottom", fill="x")
-        self.v_scrollbar.pack(side="right", fill="y")
-        self.canvas.pack(side="left", fill="both", expand=True)
+        self.canvas.grid(row=1, column=0, sticky="nsew")
+        self.h_scrollbar.grid(row=2, column=0, sticky="ew")
+        self.v_scrollbar.grid(row=1, column=1, sticky="ns")
 
-        self.preview_frame = tk.Frame(self.canvas)
+        self.preview_frame = ttk.Frame(self.canvas)
+        
         self.canvas.create_window((0, 0), window=self.preview_frame, anchor="nw")
         self.preview_frame.bind("<Configure>", lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all")))
 
@@ -108,7 +125,7 @@ class TextureMapApp:
 
         for idx, img in enumerate(self.original_images):
             maps = {}
-            frame = tk.LabelFrame(self.preview_frame, text=os.path.basename(self.image_paths[idx]), padx=10, pady=10)
+            frame = ttk.LabelFrame(self.preview_frame, text=os.path.basename(self.image_paths[idx]), padding=10)
             frame.pack(padx=10, pady=10, fill="x")
 
             map_list = ["Diffuse", "AO", "Roughness", "Normal", "Displacement", "Metallic", "Emissive"]
@@ -116,7 +133,7 @@ class TextureMapApp:
                 map_list.insert(1, "Opacity")
 
             for i, map_type in enumerate(map_list):
-                sub = tk.Frame(frame)
+                sub = ttk.Frame(frame)
                 sub.grid(row=i // 3, column=i % 3, padx=10, pady=5)
 
                 map_img = generate_map(
@@ -130,22 +147,25 @@ class TextureMapApp:
                 )
                 imgtk = ImageTk.PhotoImage(Image.fromarray(map_img).resize((384, 384)))
 
-                label = tk.Label(sub, image=imgtk)
+                label = ttk.Label(sub, image=imgtk)
                 label.image = imgtk
                 label.pack()
 
                 if map_type == "Diffuse":
-                    brightness = tk.Scale(sub, from_=0, to=200, orient="horizontal", label="Яркость", command=lambda val, i=idx: self.update_diffuse(i))
-                    contrast = tk.Scale(sub, from_=0, to=200, orient="horizontal", label="Контраст", command=lambda val, i=idx: self.update_diffuse(i))
-                    tint_strength = tk.Scale(sub, from_=0, to=100, orient="horizontal", label="Tint %", command=lambda val, i=idx: self.update_diffuse(i))
+                    ttk.Label(sub, text="Яркость").pack()
+                    brightness = ttk.Scale(sub, from_=0, to=200, orient="horizontal", command=lambda val, i=idx: self.update_diffuse(i))
+                    ttk.Label(sub, text="Контраст").pack()
+                    contrast = ttk.Scale(sub, from_=0, to=200, orient="horizontal", command=lambda val, i=idx: self.update_diffuse(i))
+                    ttk.Label(sub, text="Tint %").pack()
+                    tint_strength = ttk.Scale(sub, from_=0, to=100, orient="horizontal", command=lambda val, i=idx: self.update_diffuse(i))
                     brightness_toggle = tk.BooleanVar(value=True)
                     contrast_toggle = tk.BooleanVar(value=True)
                     tint_toggle = tk.BooleanVar(value=True)
-                    tk.Checkbutton(sub, text="B", variable=brightness_toggle, command=lambda i=idx: self.update_diffuse(i)).pack()
-                    tk.Checkbutton(sub, text="C", variable=contrast_toggle, command=lambda i=idx: self.update_diffuse(i)).pack()
-                    tk.Checkbutton(sub, text="T", variable=tint_toggle, command=lambda i=idx: self.update_diffuse(i)).pack()
-                    tint_color_btn = tk.Button(sub, text="Цвет", command=self.select_tint_color)
-                    self.color_display = tk.Label(sub, width=3, height=1, bg=rgb_to_hex(self.tint_color), relief="ridge")
+                    ttk.Checkbutton(sub, text="B", variable=brightness_toggle, command=lambda i=idx: self.update_diffuse(i)).pack()
+                    ttk.Checkbutton(sub, text="C", variable=contrast_toggle, command=lambda i=idx: self.update_diffuse(i)).pack()
+                    ttk.Checkbutton(sub, text="T", variable=tint_toggle, command=lambda i=idx: self.update_diffuse(i)).pack()
+                    tint_color_btn = ttk.Button(sub, text="Цвет", command=self.select_tint_color)
+                    self.color_display = ttk.Label(sub, width=3, background=rgb_to_hex(self.tint_color), relief="ridge")
 
                     brightness.set(100)
                     contrast.set(100)
@@ -167,12 +187,12 @@ class TextureMapApp:
                         tint_toggle,
                     )
                 else:
-                    slider = tk.Scale(
+                    ttk.Label(sub, text=map_type).pack()
+                    slider = ttk.Scale(
                         sub,
                         from_=0,
                         to=100,
                         orient="horizontal",
-                        label=map_type,
                         command=lambda val, i=idx, mt=map_type: self.update_map(i, mt, float(val)),
                     )
                     slider.set(50)
