@@ -47,8 +47,30 @@ class TextureMapApp:
             style.theme_use("clam")
         except tk.TclError:
             pass
-        style.configure("TButton", padding=(PAD_X, PAD_Y))
-        style.configure("TCheckbutton", padding=(PAD_X, PAD_Y))
+        self.root.configure(bg="#2d2d2d")
+        style.configure(
+            "TFrame",
+            background="#2d2d2d",
+        )
+        style.configure(
+            "TLabelFrame",
+            background="#2d2d2d",
+            foreground="#ffffff",
+        )
+        style.configure(
+            "TLabel",
+            background="#2d2d2d",
+            foreground="#ffffff",
+        )
+        style.configure(
+            "TButton",
+            padding=(PAD_X, PAD_Y),
+            background="#444444",
+            foreground="#ffffff",
+            relief="flat",
+        )
+        style.map("TButton", background=[("active", "#666666")])
+        style.configure("TCheckbutton", padding=(PAD_X, PAD_Y), background="#2d2d2d", foreground="#ffffff")
 
         btn_frame = ttk.Frame(self.root)
         btn_frame.grid(row=0, column=0, sticky="w", padx=PAD_X, pady=PAD_Y)
@@ -125,16 +147,31 @@ class TextureMapApp:
 
         for idx, img in enumerate(self.original_images):
             maps = {}
-            frame = ttk.LabelFrame(self.preview_frame, text=os.path.basename(self.image_paths[idx]), padding=10)
+            frame = ttk.LabelFrame(
+                self.preview_frame,
+                text=os.path.basename(self.image_paths[idx]),
+                padding=10,
+            )
             frame.pack(padx=10, pady=10, fill="x")
 
-            map_list = ["Diffuse", "AO", "Roughness", "Normal", "Displacement", "Metallic", "Emissive"]
+            notebook = ttk.Notebook(frame)
+            notebook.pack(fill="both", expand=True)
+
+            map_list = [
+                "Diffuse",
+                "AO",
+                "Roughness",
+                "Normal",
+                "Displacement",
+                "Metallic",
+                "Emissive",
+            ]
             if img.shape[2] == 4:
                 map_list.insert(1, "Opacity")
 
-            for i, map_type in enumerate(map_list):
-                sub = ttk.Frame(frame)
-                sub.grid(row=i // 3, column=i % 3, padx=10, pady=5)
+            for map_type in map_list:
+                sub = ttk.Frame(notebook)
+                notebook.add(sub, text=map_type)
 
                 map_img = generate_map(
                     map_type,
