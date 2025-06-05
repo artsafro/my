@@ -5,9 +5,9 @@ from typing import Dict, List, Tuple
 
 import cv2
 import numpy as np
-from flask import Flask, render_template, request
+from flask import Flask, jsonify, render_template, request
 
-from .processing import generate_map
+from .processing import generate_map, generate_combined_map
 
 
 def _apply_diffuse_adjustments(
@@ -38,6 +38,7 @@ def create_app() -> Flask:
         if request.method == 'POST':
             files = request.files.getlist('images')
             results: List[Dict[str, Dict[str, str]]] = []
+            action = request.form.get('action', 'generate')
 
             brightness = float(request.form.get('brightness', 100)) / 100.0
             contrast = float(request.form.get('contrast', 100)) / 100.0
@@ -70,46 +71,150 @@ def create_app() -> Flask:
                     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
                     has_alpha = False
 
-                map_list = [
-                    "Diffuse",
-                    "AO",
-                    "Roughness",
-                    "Normal",
-                    "Displacement",
-                    "Metallic",
-                    "Emissive",
-                ]
-                if has_alpha:
-                    map_list.insert(1, "Opacity")
-
                 maps: Dict[str, str] = {}
-                for map_type in map_list:
-                    if map_type == 'Diffuse':
-                        m = _apply_diffuse_adjustments(
-                            img,
-                            brightness,
-                            contrast,
-                            tint_strength,
-                            tint_color,
-                            brightness_enabled,
-                            contrast_enabled,
-                            tint_enabled,
-                        )
-                    else:
-                        strength = strengths.get(map_type, 0.5)
-                        m = generate_map(
-                            map_type,
-                            img,
-                            strength,
-                            invert_green=invert_green,
-                            metallic_enabled=metallic_enabled,
-                            emissive_enabled=emissive_enabled,
-                            emissive_color=emissive_color,
-                        )
+
+                if action == 'create_ORM' or action == 'create_ERM':
+                    m = generate_combined_map(
+                        'ORM' if action == 'create_ORM' else 'ERM',
+                        img,
+                        strengths,
+                        invert_green=invert_green,
+                        metallic_enabled=metallic_enabled,
+                        emissive_enabled=emissive_enabled,
+                        emissive_color=emissive_color,
+                    )
                     _, buf = cv2.imencode('.png', cv2.cvtColor(m, cv2.COLOR_RGB2BGR))
-                    maps[map_type] = base64.b64encode(buf).decode('utf-8')
+                    key = 'ORM' if action == 'create_ORM' else 'ERM'
+                    maps[key] = base64.b64encode(buf).decode('utf-8')
+                else:
+                    map_list = [
+                        "Diffuse",
+                        "AO",
+                        "Roughness",
+                        "Normal",
+                        "Displacement",
+                        "Metallic",
+                        "Emissive",
+                    ]
+                    if has_alpha:
+                        map_list.insert(1, "Opacity")
+
+                    for map_type in map_list:
+                        if map_type == 'Diffuse':
+                            m = _apply_diffuse_adjustments(
+                                img,
+                                brightness,
+                                contrast,
+                                tint_strength,
+                                tint_color,
+                                brightness_enabled,
+                                contrast_enabled,
+                                tint_enabled,
+                            )
+                        else:
+                            strength = strengths.get(map_type, 0.5)
+                            m = generate_map(
+                                map_type,
+                                img,
+                                strength,
+                                invert_green=invert_green,
+                                metallic_enabled=metallic_enabled,
+                                emissive_enabled=emissive_enabled,
+                                emissive_color=emissive_color,
+                            )
+                        _, buf = cv2.imencode('.png', cv2.cvtColor(m, cv2.COLOR_RGB2BGR))
+                        maps[map_type] = base64.b64encode(buf).decode('utf-8')
+
                 results.append({'name': f.filename, 'maps': maps})
+
             return render_template('result.html', results=results)
         return render_template('index.html')
+
+    @app.route('/preview', methods=['POST'])
+    def preview():
+        data = request.get_json(force=True)
+        img_data = base64.b64decode(data.get('image', ''))
+        arr = np.frombuffer(img_data, np.uint8)
+        img = cv2.imdecode(arr, cv2.IMREAD_UNCHANGED)
+        if img is None:
+            return jsonify({})
+        if img.shape[2] == 4:
+            img = cv2.cvtColor(img, cv2.COLOR_BGRA2RGB)
+            has_alpha = True
+        else:
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            has_alpha = False
+
+        brightness = float(data.get('brightness', 100)) / 100.0
+        contrast = float(data.get('contrast', 100)) / 100.0
+        tint_strength = float(data.get('tint_strength', 50)) / 100.0
+        tint_color_hex = data.get('tint_color', 'ffffff')
+        tint_color = tuple(int(tint_color_hex[i:i+2], 16) for i in (0, 2, 4))
+        brightness_enabled = data.get('brightness_enabled', 'on') == 'on'
+        contrast_enabled = data.get('contrast_enabled', 'on') == 'on'
+        tint_enabled = data.get('tint_enabled', 'on') == 'on'
+
+        invert_green = data.get('invert_green') == 'on'
+        metallic_enabled = data.get('metallic_enabled', 'on') == 'on'
+        emissive_enabled = data.get('emissive_enabled') == 'on'
+        emissive_hex = data.get('emissive_color', 'f7f731')
+        emissive_color = tuple(int(emissive_hex[i:i+2], 16) for i in (0, 2, 4))
+
+        strengths = {}
+        for key in ['Opacity', 'AO', 'Roughness', 'Normal', 'Displacement', 'Metallic', 'Emissive']:
+            strengths[key] = float(data.get(f'strength_{key}', 50)) / 100.0
+
+        map_list = [
+            'Diffuse',
+            'AO',
+            'Roughness',
+            'Normal',
+            'Displacement',
+            'Metallic',
+            'Emissive',
+            'ORM',
+            'ERM',
+        ]
+        if has_alpha:
+            map_list.insert(1, 'Opacity')
+
+        maps = {}
+        for map_type in map_list:
+            if map_type == 'Diffuse':
+                m = _apply_diffuse_adjustments(
+                    img,
+                    brightness,
+                    contrast,
+                    tint_strength,
+                    tint_color,
+                    brightness_enabled,
+                    contrast_enabled,
+                    tint_enabled,
+                )
+            elif map_type in {'ORM', 'ERM'}:
+                m = generate_combined_map(
+                    map_type,
+                    img,
+                    strengths,
+                    invert_green=invert_green,
+                    metallic_enabled=metallic_enabled,
+                    emissive_enabled=emissive_enabled,
+                    emissive_color=emissive_color,
+                )
+            else:
+                strength = strengths.get(map_type, 0.5)
+                m = generate_map(
+                    map_type,
+                    img,
+                    strength,
+                    invert_green=invert_green,
+                    metallic_enabled=metallic_enabled,
+                    emissive_enabled=emissive_enabled,
+                    emissive_color=emissive_color,
+                )
+            _, buf = cv2.imencode('.png', cv2.cvtColor(m, cv2.COLOR_RGB2BGR))
+            maps[map_type] = base64.b64encode(buf).decode('utf-8')
+
+        return jsonify(maps)
 
     return app

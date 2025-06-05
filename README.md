@@ -20,6 +20,8 @@ pip install -r requirements.txt
 python main.py
 ```
 
-Open `http://localhost:5000` in your browser. Upload images, adjust map strengths
-and diffuse parameters, then generate maps. Results can be downloaded directly
-from the browser.
+Open `http://localhost:5000` in your browser. Upload one or more images.
+Sliders update a live preview in real time for the first selected image.
+Use the **Generate Maps** button for normal maps, or the **Create ORM** / **Create ERM**
+buttons to produce combined maps. Multiple images are processed in batch.
+All results can be downloaded directly from the browser.

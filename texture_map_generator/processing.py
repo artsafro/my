@@ -91,3 +91,75 @@ def generate_map(
         return image[:, :, :3]
 
     return image[:, :, :3]
+
+
+def generate_combined_map(
+    map_type: str,
+    image: np.ndarray,
+    strengths: dict[str, float],
+    *,
+    invert_green: bool = False,
+    metallic_enabled: bool = True,
+    emissive_enabled: bool = False,
+    emissive_color: Tuple[int, int, int] = (247, 247, 49),
+) -> np.ndarray:
+    """Generate combined ORM or ERM maps.
+
+    Parameters
+    ----------
+    map_type:
+        Either ``"ORM"`` or ``"ERM"``.
+    image:
+        Source image in RGB[A] format.
+    strengths:
+        Dictionary with per-map strengths.
+    """
+
+    if map_type not in {"ORM", "ERM"}:
+        raise ValueError("map_type must be 'ORM' or 'ERM'")
+
+    ao = generate_map(
+        "AO",
+        image,
+        strengths.get("AO", 0.5),
+        invert_green=invert_green,
+        metallic_enabled=metallic_enabled,
+        emissive_enabled=emissive_enabled,
+        emissive_color=emissive_color,
+    )
+    rough = generate_map(
+        "Roughness",
+        image,
+        strengths.get("Roughness", 0.5),
+        invert_green=invert_green,
+        metallic_enabled=metallic_enabled,
+        emissive_enabled=emissive_enabled,
+        emissive_color=emissive_color,
+    )
+    metallic = generate_map(
+        "Metallic",
+        image,
+        strengths.get("Metallic", 0.5),
+        invert_green=invert_green,
+        metallic_enabled=metallic_enabled,
+        emissive_enabled=emissive_enabled,
+        emissive_color=emissive_color,
+    )
+
+    if map_type == "ORM":
+        r = ao[:, :, 0]
+    else:  # ERM
+        emissive = generate_map(
+            "Emissive",
+            image,
+            strengths.get("Emissive", 0.5),
+            invert_green=invert_green,
+            metallic_enabled=metallic_enabled,
+            emissive_enabled=emissive_enabled,
+            emissive_color=emissive_color,
+        )
+        r = emissive[:, :, 0]
+
+    g = rough[:, :, 0]
+    b = metallic[:, :, 0]
+    return np.stack([r, g, b], axis=2)
